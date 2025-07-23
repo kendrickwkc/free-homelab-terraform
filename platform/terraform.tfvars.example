@@ -1,0 +1,8 @@
+region               = "your-region"
+availability_domain  = "your-availability-domain"
+kubernetes_version   = "your-kubernetes-version"
+tenancy_ocid         = "ocid1.tenancy.oc1..xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+compartment_ocid     = "ocid1.compartment.oc1..xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+ssh_public_key       = "ssh-rsa AAAA... your-public-key"
+mysql_admin_password = "your-mysql-admin-password"
+budget_alert_email   = "your-email@example.com"
