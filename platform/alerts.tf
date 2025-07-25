@@ -13,9 +13,9 @@ resource "oci_ons_subscription" "budget_email" {
 }
 
 resource "oci_budget_budget" "budget" {
-  compartment_id = var.compartment_ocid
+  compartment_id = var.tenancy_ocid
   target_type    = "COMPARTMENT"
-  targets        = [var.compartment_ocid]
+  targets        = [var.tenancy_ocid]
   amount         = var.monthly_budget_usd
   reset_period   = "MONTHLY"
   display_name   = "homelab-budget"
