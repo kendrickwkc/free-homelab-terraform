@@ -12,11 +12,13 @@ locals {
 output "compartment_id" {
   description = "Compartment OCID (tenants read this via remote state)"
   value       = var.compartment_ocid
+  sensitive   = true
 }
 
 output "tenancy_ocid" {
   description = "Tenancy (root compartment) OCID (tenants read this via remote state)"
   value       = var.tenancy_ocid
+  sensitive   = true
 }
 
 output "region" {
