@@ -1,0 +1,6 @@
+region        = "your-region"
+oci_namespace = "your-object-storage-namespace"
+tenancy_id    = "ocid1.tenancy.oc1..xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+zone          = "your-domain.example"
+cf_account_id = "your-cloudflare-account-id"
+cf_api_token  = "your-zone-scoped-cloudflare-api-token"

@@ -1,0 +1,6 @@
+# Copy to backend.tfbackend (gitignored) with your values, then:
+#   terraform init -backend-config=backend.tfbackend
+bucket    = "terraform-state"
+namespace = "your-object-storage-namespace"
+region    = "your-region"
+key       = "platform/terraform.tfstate"

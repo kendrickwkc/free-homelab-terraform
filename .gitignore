@@ -1,0 +1,21 @@
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfplan
+*.tfbackend
+!*.tfvars.example
+!*.tfbackend.example
+
+# Secrets / local files
+*.pem
+kubeconfig*
+sealed-secrets-key.yaml
+
+# OS / tooling junk
+**/.DS_Store
+
+# Terraform crash logs
+crash.log
+crash.*.log
