@@ -22,7 +22,7 @@ in your home region.
 
 | Component | Detail |
 |---|---|
-| **Kubernetes** | OKE basic cluster, private API endpoint, bastion access |
+| **Kubernetes** | OKE basic cluster, private API endpoint, Tailscale daily-driver access (+ bastion bootstrap) |
 | **Node pools** | `general` 1× 2 OCPU / 12 GB (labelled `storage=true`) · `small` 2× 1 OCPU / 6 GB |
 | **Placement** | Single availability domain, spread across 3 fault domains |
 | **Storage** | OCI Block Volume CSI + `oci-bv` StorageClass (`WaitForFirstConsumer`) |
@@ -51,6 +51,8 @@ budget alarm (fires on any billable spend) is your tripwire.
 - [Terraform](https://developer.hashicorp.com/terraform/downloads) >= 1.5
 - [OCI CLI](https://docs.oracle.com/en-us/iaas/Content/API/SDKDocs/cliinstall.htm)
 - `kubectl`, `helm`, [`kubeseal`](https://github.com/bitnami-labs/sealed-secrets#installation)
+- A [Tailscale](https://tailscale.com) account (free plan is fine) with the
+  client installed on your workstation
 - One Cloudflare account (shared — all tenant zones live in it; each tenant
   holds a zone-scoped API token)
 
@@ -90,26 +92,29 @@ Then bootstrap the cluster services:
 # 1. OCI CSI driver + oci-bv StorageClass (see docs/csi.md)
 # 2. Sealed Secrets controller -> installs + backs up the sealing key
 ./scripts/install-sealed-secrets.sh
-# 3. (optional) shared Meilisearch, see docs/meilisearch.md
+# 3. Tailscale operator -> tailnet access to the private cluster (see docs/tailscale.md);
+#    needs a one-time bastion tunnel first: ./scripts/connect-k8s.sh
+OAUTH_CLIENT_ID=<id> OAUTH_CLIENT_SECRET=<secret> ./scripts/install-tailscale-operator.sh
+kubectl apply -f tailscale-connector.yaml
+# 4. (optional) shared Meilisearch, see docs/meilisearch.md
 ```
 
 > **Critical:** `sealed-secrets-key.yaml` is the only way to decrypt your sealed
 > secrets. Store it somewhere safe and offline.
 
-## Bastion access
+## Cluster access
 
-The cluster API and MySQL are private (no public IPs). Reach them through the
-OCI Bastion with on-demand, short-lived port-forward sessions:
+The cluster API, pod IPs and service ClusterIPs are private (no public IPs).
 
-```sh
-# OKE kubeconfig (private endpoint)
-oci ce cluster create-kubeconfig --cluster-id <cluster-ocid> \
-  --file kubeconfig --region <region> --token-version 2.0.0 \
-  --kube-endpoint PRIVATE_ENDPOINT
+**Daily driver — Tailscale** ([docs/tailscale.md](docs/tailscale.md)): the
+operator exposes the API at `https://homelab-k8s.<tailnet>.ts.net` and a subnet
+router advertises the cluster CIDRs, so kubectl and direct service connections
+work from any tailnet device with no tunnels or port-forwards.
 
-# MySQL admin (per-tenant DB/user creation) — see docs/bastion.md for the
-# full bastion session + port-forward flow.
-```
+**Bootstrap & break-glass — OCI Bastion** ([docs/bastion.md](docs/bastion.md)):
+on-demand short-lived port-forward sessions via
+`./scripts/connect-k8s.sh`. You need this once before Tailscale exists on the
+cluster; afterwards keep it for emergencies and per-session MySQL admin.
 
 See [docs/bastion.md](docs/bastion.md) for the exact `oci bastion session create`
 commands.
@@ -164,8 +169,8 @@ bridged once from `terraform output` — see [docs/onboarding.md](docs/onboardin
 platform/            shared infrastructure (OCI only)
 modules/tenant/      reusable tenant module (+ generic assets Worker)
 examples/            copyable example tenant
-scripts/             one-time cluster bootstrap (Sealed Secrets install + key backup)
-docs/                csi, meilisearch, bastion, onboarding
+scripts/             one-time cluster bootstrap (Sealed Secrets, Tailscale operator, bastion tunnel)
+docs/                csi, meilisearch, tailscale, bastion, onboarding
 ```
 
 ## License
