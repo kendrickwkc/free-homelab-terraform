@@ -88,10 +88,8 @@ Then bootstrap the cluster services:
 
 ```sh
 # 1. OCI CSI driver + oci-bv StorageClass (see docs/csi.md)
-# 2. Sealed Secrets controller  ->  BACK UP THE SEALING PRIVATE KEY
-helm repo add sealed-secrets https://bitnami-labs.github.io/sealed-secrets
-helm install sealed-secrets sealed-secrets/sealed-secrets --namespace kube-system --create-namespace
-kubectl get secret -n kube-system -l sealedsecrets.bitnami.com/sealed-secrets-key -o yaml > sealed-secrets-key.yaml
+# 2. Sealed Secrets controller -> installs + backs up the sealing key
+./scripts/install-sealed-secrets.sh
 # 3. (optional) shared Meilisearch, see docs/meilisearch.md
 ```
 
@@ -152,7 +150,7 @@ Plaintext never leaves your machine. Human secrets are sealed and committed:
 
 ```sh
 kubectl create namespace myproject
-kubeseal --controller-name sealed-secrets --controller-namespace kube-system \
+kubeseal --controller-name sealed-secrets-controller --controller-namespace kube-system \
   < secret.yaml > secret-sealed.yaml
 git add secret-sealed.yaml
 ```
@@ -166,6 +164,7 @@ bridged once from `terraform output` — see [docs/onboarding.md](docs/onboardin
 platform/            shared infrastructure (OCI only)
 modules/tenant/      reusable tenant module (+ generic assets Worker)
 examples/            copyable example tenant
+scripts/             one-time cluster bootstrap (Sealed Secrets install + key backup)
 docs/                csi, meilisearch, bastion, onboarding
 ```
 

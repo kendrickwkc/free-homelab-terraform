@@ -11,7 +11,7 @@
 # Secrets / local files
 *.pem
 kubeconfig*
-sealed-secrets-key.yaml
+sealed-secrets-key*.yaml
 
 # OS / tooling junk
 **/.DS_Store

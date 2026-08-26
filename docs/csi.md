@@ -12,23 +12,19 @@ Follow Oracle's current OKE CSI install (the driver is `blockvolume.csi.oraclecl
 If you prefer Helm, OKE publishes a chart for the CSI driver under the
 `oci` repo. Verify the exact chart name against the link above before running.
 
-## 2. Create the StorageClass
+## 2. Apply the StorageClass
 
-```yaml
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: oci-bv
-provisioner: blockvolume.csi.oraclecloud.com
-volumeBindingMode: WaitForFirstConsumer
-allowVolumeExpansion: true
-parameters:
-  attachment-type: "paravirtualized"
-```
+OKE basic clusters already ship the Block Volume CSI driver and a default
+`oci-bv` StorageClass. The committed [`storageclass.yaml`](../storageclass.yaml)
+pins them explicitly (paravirtualized attachments, default-class annotation):
 
 ```sh
 kubectl apply -f storageclass.yaml
 ```
+
+StorageClass parameters are immutable: if an `oci-bv` already exists with
+different parameters, delete it first, then re-apply (safe while no PVCs
+reference it).
 
 `WaitForFirstConsumer` delays volume provisioning until a pod is scheduled, so
 the volume lands in the same AD as the node — which is also why stateful pods
@@ -51,5 +47,7 @@ spec:
 
 > **Ceiling:** the Always Free block-volume budget is 200 GB total, and 150 GB is
 > already consumed by the three 50 GB boot volumes. That leaves **50 GB** for all
-> block-backed PVCs across the whole tenancy. Size PVCs accordingly — a 51 GB
-> request will bill you.
+> block-backed PVCs across the whole tenancy. OCI Block Volumes also have a
+> **50 GB minimum** — a smaller PVC request still provisions (and consumes) a
+> full 50 GB volume, so plan for exactly one block-backed volume per tenancy.
+> Size PVCs accordingly — a 51 GB request will bill you.

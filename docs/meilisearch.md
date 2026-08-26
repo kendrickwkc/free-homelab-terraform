@@ -10,7 +10,7 @@ their own API keys (never the master key).
 ```sh
 kubectl create namespace platform
 # write secret.yaml with MEILI_MASTER_KEY, then:
-kubeseal --controller-name sealed-secrets --controller-namespace kube-system \
+kubeseal --controller-name sealed-secrets-controller --controller-namespace kube-system \
   < secret.yaml > meilisearch-master-key-sealed.yaml
 kubectl apply -f meilisearch-master-key-sealed.yaml
 ```
