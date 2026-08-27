@@ -1,4 +1,10 @@
-# Bastion access
+# Bastion access (bootstrap & break-glass)
+
+> **Daily driver:** [tailscale.md](tailscale.md) — once the Tailscale operator
+> is installed, use it for cluster API and workload access without tunnels.
+> This page is for **first contact** (installing the operator on a fresh
+> cluster) and **break-glass** when Tailscale itself is unavailable, plus the
+> per-session MySQL flow.
 
 The OKE API endpoint and MySQL are private. Use the OCI Bastion to create
 short-lived port-forward sessions rather than exposing anything publicly.
@@ -32,8 +38,8 @@ kubectl config set-cluster <cluster-name> --server=https://127.0.0.1:6443
 
 ### Every session: open the tunnel, then use the context
 
-Open the bastion port-forward to the private API IP on port 6443 (the tenant's
-`connect-k8s.sh` automates this, or create a manual `port-forwarding` session).
+Open the bastion port-forward to the private API IP on port 6443 via this
+repo's `scripts/connect-k8s.sh` (or create a manual `port-forwarding` session).
 The script prints `=== tunnel is up on localhost:6443 ===` once connected; the
 first ssh attempt can fail transiently while the session registers its key, and
 the script retries automatically:
