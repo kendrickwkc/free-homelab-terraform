@@ -68,7 +68,7 @@ kubectl apply -f tailscale-connector.yaml
 ```
 
 Approve the advertised routes once: Tailscale admin console -> Machines ->
-`scenedb-router` -> Edit route settings -> approve. (Skip approval entirely by
+`cluster-router` -> Edit route settings -> approve. (Skip approval entirely by
 adding an `autoApprovers.routes` entry for `tag:k8s` to the policy file.)
 
 ## Point kubectl at the proxy

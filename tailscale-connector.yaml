@@ -8,11 +8,11 @@
 apiVersion: tailscale.com/v1alpha1
 kind: Connector
 metadata:
-  name: scenedb-router
+  name: cluster-router
   namespace: tailscale
 spec:
   replicas: 1
-  hostnamePrefix: scenedb-router
+  hostnamePrefix: cluster-router
   subnetRouter:
     advertiseRoutes:
       - 10.96.0.0/16   # service ClusterIPs (OKE default)
