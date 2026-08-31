@@ -23,7 +23,7 @@ variable "availability_domain" {
 variable "kubernetes_version" {
   description = "OKE Kubernetes version (from oci ce cluster create-options)"
   type        = string
-  default     = "v1.33.1"
+  default     = "v1.34.2"
 }
 
 variable "ssh_public_key" {
