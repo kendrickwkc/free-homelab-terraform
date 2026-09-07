@@ -31,6 +31,9 @@ echo "==> Adding the Tailscale Helm repository"
 helm repo add tailscale https://pkgs.tailscale.com/helmcharts --force-update >/dev/null
 helm repo update >/dev/null
 
+# OKE 1.36+ worker images run CRI-O with short-name mode "enforcing": the
+# default DockerHub-style short names exist in multiple registries and are
+# refused as ambiguous. Pin the synced ghcr.io images instead.
 echo "==> Installing tailscale-operator into namespace '${NAMESPACE}'"
 helm upgrade --install tailscale-operator tailscale/tailscale-operator \
   --namespace "${NAMESPACE}" \
@@ -39,6 +42,8 @@ helm upgrade --install tailscale-operator tailscale/tailscale-operator \
   --set-string "oauth.clientSecret=${OAUTH_CLIENT_SECRET}" \
   --set-string "operatorConfig.hostname=${OPERATOR_HOSTNAME}" \
   --set-string "apiServerProxyConfig.mode=noauth" \
+  --set "operatorConfig.image.repository=ghcr.io/tailscale/k8s-operator" \
+  --set "proxyConfig.image.repository=ghcr.io/tailscale/tailscale" \
   --wait
 
 echo "==> Operator pods"
