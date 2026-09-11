@@ -1,7 +1,9 @@
 # Example tenant — copy this directory into your project repo as `infra/`.
 #
+# This repo is a template: after "Use this template", YOUR copy hosts the
+# tenant module. Project repos consume it from your copy (replace
+# <your-username>, pin a tag, bump the tag to pull module fixes from upstream).
 # Local dev (inside this repo): use source = "../../modules/tenant"
-# Project repo:                  use the git source below (replace username, pin a tag)
 
 terraform {
   required_version = ">= 1.5"
@@ -13,6 +15,10 @@ terraform {
     cloudflare = {
       source  = "cloudflare/cloudflare"
       version = "~> 4.0"
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.0"
     }
   }
   # Tenant state lives in the shared terraform-state bucket under its own key:
@@ -39,7 +45,10 @@ data "terraform_remote_state" "platform" {
 }
 
 module "tenant" {
-  source = "github.com/your-github-username/free-homelab-terraform//modules/tenant?ref=main"
+  # Local dev / in-repo validation (shipped default):
+  source = "../../modules/tenant"
+  # Project repo (after copying, inside your template copy):
+  # source = "github.com/<your-username>/free-homelab-terraform//modules/tenant?ref=v1.1.0"
 
   name           = "example"
   zone           = var.zone

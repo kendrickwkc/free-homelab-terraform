@@ -1,0 +1,39 @@
+# Runs the tenant's Cloudflare Tunnel in the cluster. The tunnel itself
+# (and its DNS CNAME) is created by the tenant Terraform module; this
+# deployment consumes the tunnel token bridged from terraform output and
+# sealed with kubeseal (see sealed-secret-example.yaml).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudflared
+  namespace: example
+  labels:
+    app: cloudflared
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: cloudflared
+  template:
+    metadata:
+      labels:
+        app: cloudflared
+    spec:
+      containers:
+        - name: cloudflared
+          image: cloudflare/cloudflared:2026.8.2
+          args:
+            - tunnel
+            - run
+          env:
+            - name: TUNNEL_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: cloudflared-token
+                  key: token
+          resources:
+            requests:
+              cpu: 100m
+              memory: 64Mi
+            limits:
+              memory: 256Mi

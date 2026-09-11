@@ -15,6 +15,11 @@ sealed-secrets-key*.yaml
 
 # OS / tooling junk
 **/.DS_Store
+.nvimlog
+
+# Diagram sources (kept locally, not part of the repo)
+*.drawio
+*.bkp
 
 # Terraform crash logs
 crash.log

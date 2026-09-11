@@ -51,7 +51,13 @@ kubectl get nodes
 
 The `homelab` context only works while the tunnel is up.
 
-## MySQL (manual per-tenant DB/user creation)
+## MySQL (break-glass; daily driver is tailnet access)
+
+> Once Tailscale is running, create tenant databases directly from your
+> workstation — the subnet router makes the private MySQL reachable (see the
+> [example tenant's database step](../examples/example-tenant/README.md#5-database-optional)).
+> Use the manual flow below only before Tailscale is installed or while the
+> tailnet is unavailable.
 
 1. Find the MySQL private IP:
 

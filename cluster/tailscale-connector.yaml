@@ -3,7 +3,7 @@
 # no bastion tunnel, no kubectl port-forward.
 #
 # Fill in advertiseRoutes from docs/tailscale.md ("Discover the CIDRs"), then:
-#   kubectl apply -f tailscale-connector.yaml
+#   kubectl apply -f cluster/tailscale-connector.yaml
 # and approve the routes once in the Tailscale admin console (Machines page).
 apiVersion: tailscale.com/v1alpha1
 kind: Connector

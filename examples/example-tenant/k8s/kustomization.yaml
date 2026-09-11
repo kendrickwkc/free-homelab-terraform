@@ -1,0 +1,10 @@
+# Example tenant manifests. Apply with:
+#   kubectl apply -k examples/example-tenant/k8s/
+# (inside a tenant repo copy: kubectl apply -k k8s/)
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - namespace.yaml
+  - cloudflared-deployment.yaml
+  - demo-app.yaml
+  # sealed/cloudflared-token.yaml goes here once sealed (see sealed-secret-example.yaml)
