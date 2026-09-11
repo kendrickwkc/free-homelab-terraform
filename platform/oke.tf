@@ -3,7 +3,7 @@
 resource "oci_containerengine_cluster" "oke" {
   compartment_id     = var.compartment_ocid
   kubernetes_version = var.kubernetes_version
-  name               = "homelab-cluster"
+  name               = var.cluster_name
   vcn_id             = oci_core_vcn.vcn.id
 
   endpoint_config {
@@ -30,7 +30,9 @@ locals {
 }
 
 # ── Node pools ────────────────────────────────────────────
-# Free-tier A1 allowance is 4 OCPU / 24 GB total. Memory is capped at 6 GB/OCPU.
+# Defaults consume the A1 free allowance exactly: 4 OCPU / 24 GB total
+# (memory is capped at 6 GB/OCPU). Sizes are variables — shrinking them
+# frees headroom; growing them bills you.
 #   general: 1x 2 OCPU / 12 GB, FD-1, labelled storage=true (stateful workloads)
 #   small:   2x 1 OCPU / 6 GB,  FD-2 + FD-3 (stateless workloads)
 
@@ -42,8 +44,8 @@ resource "oci_containerengine_node_pool" "general" {
   node_shape         = "VM.Standard.A1.Flex"
 
   node_shape_config {
-    ocpus         = 2
-    memory_in_gbs = 12
+    ocpus         = var.node_general_ocpus
+    memory_in_gbs = var.node_general_memory
   }
 
   node_config_details {
@@ -52,13 +54,13 @@ resource "oci_containerengine_node_pool" "general" {
       fault_domains       = ["FAULT-DOMAIN-1"]
       subnet_id           = oci_core_subnet.worker_subnet.id
     }
-    size = 1
+    size = var.node_general_size
   }
 
   node_source_details {
     source_type             = "IMAGE"
     image_id                = local.oke_image_ocid
-    boot_volume_size_in_gbs = "50"
+    boot_volume_size_in_gbs = var.boot_volume_size_gb
   }
 
   initial_node_labels {
@@ -82,8 +84,8 @@ resource "oci_containerengine_node_pool" "small" {
   node_shape         = "VM.Standard.A1.Flex"
 
   node_shape_config {
-    ocpus         = 1
-    memory_in_gbs = 6
+    ocpus         = var.node_small_ocpus
+    memory_in_gbs = var.node_small_memory
   }
 
   node_config_details {
@@ -92,13 +94,13 @@ resource "oci_containerengine_node_pool" "small" {
       fault_domains       = ["FAULT-DOMAIN-2", "FAULT-DOMAIN-3"]
       subnet_id           = oci_core_subnet.worker_subnet.id
     }
-    size = 2
+    size = var.node_small_size
   }
 
   node_source_details {
     source_type             = "IMAGE"
     image_id                = local.oke_image_ocid
-    boot_volume_size_in_gbs = "50"
+    boot_volume_size_in_gbs = var.boot_volume_size_gb
   }
 
   initial_node_labels {

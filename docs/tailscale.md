@@ -13,8 +13,9 @@ Architecture (all in the `tailscale` namespace):
 - **API-server proxy** (noauth mode) — exposes the Kubernetes API at
   `https://homelab-k8s.<tailnet>.ts.net` with a Let's Encrypt cert. Your
   existing OKE kubeconfig credentials keep working unchanged.
-- **Subnet router** (`tailscale-connector.yaml`) — advertises the service CIDR
-  and pod CIDRs so ClusterIPs resolve from your laptop.
+- **Subnet router** (`cluster/tailscale-connector.yaml`) — advertises the service CIDR,
+  the pod CIDRs and the private subnet (`10.0.1.0/24`), so ClusterIPs and
+  private-VCN services (e.g. MySQL) are reachable from your tailnet.
 
 ## Prerequisites
 
@@ -49,7 +50,7 @@ OAUTH_CLIENT_ID=<id> OAUTH_CLIENT_SECRET=<secret> \
 
 ### Discover the CIDRs
 
-Fill `advertiseRoutes` in `tailscale-connector.yaml`:
+Fill `advertiseRoutes` in `cluster/tailscale-connector.yaml`:
 
 ```shell
 # Pod CIDR(s)
@@ -64,7 +65,7 @@ extra route is needed for it beyond the above.
 ### Apply and approve
 
 ```shell
-kubectl apply -f tailscale-connector.yaml
+kubectl apply -f cluster/tailscale-connector.yaml
 ```
 
 Approve the advertised routes once: Tailscale admin console -> Machines ->
@@ -103,7 +104,10 @@ kubectl get nodes
 ## Reaching workloads
 
 With routes approved, services are reachable by ClusterIP from any tailnet
-device — e.g. Elasticsearch at `http://<clusterip>:9200`. No port-forwarding.
+device — e.g. Meilisearch at `http://<clusterip>:7700`. Private-VCN addresses
+(like the MySQL host) work too — see the
+[example tenant's database step](../examples/example-tenant/README.md#5-database-optional)
+for the per-tenant database flow. No port-forwarding.
 
 ## Upgrades / HA
 

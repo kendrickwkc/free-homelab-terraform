@@ -10,7 +10,7 @@ data "oci_mysql_mysql_configurations" "default_config" {
 
 resource "oci_mysql_mysql_db_system" "db" {
   compartment_id      = var.compartment_ocid
-  admin_username      = "admin"
+  admin_username      = var.mysql_admin_username
   admin_password      = var.mysql_admin_password
   availability_domain = var.availability_domain
   display_name        = "homelab-mysql"

@@ -1,0 +1,45 @@
+# Demo app. The Service name ("example") and port (8080) match the tenant
+# module's default ingress rule (app_service = http://example:8080). Replace
+# this with your real app, keeping the Service name/port or overriding
+# app_service/hostname in the module call.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: example
+  namespace: example
+  labels:
+    app: example
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: example
+  template:
+    metadata:
+      labels:
+        app: example
+    spec:
+      containers:
+        - name: example
+          image: nginx:1.30.4-alpine
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: example
+  namespace: example
+spec:
+  selector:
+    app: example
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 80

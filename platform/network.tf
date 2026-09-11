@@ -1,12 +1,12 @@
 # ── Network ────────────────────────────────────────────────
-# Layout:
-#   public  subnet (10.0.0.0/24): OCI Bastion only
+# Layout (CIDRs are variables, defaults shown):
+#   public  subnet (10.0.0.0/24): OCI Bastion, service LBs
 #   private subnet (10.0.1.0/24): MySQL DB, OKE API private endpoint
 #   worker  subnet (10.0.2.0/24): OKE worker nodes (egress via NAT/SGW)
 
 resource "oci_core_vcn" "vcn" {
   compartment_id = var.compartment_ocid
-  cidr_blocks    = ["10.0.0.0/16"]
+  cidr_blocks    = [var.vcn_cidr]
   display_name   = "homelab-vcn"
   dns_label      = "homelab"
 }
@@ -74,13 +74,18 @@ resource "oci_core_security_list" "public_sl" {
   vcn_id         = oci_core_vcn.vcn.id
   display_name   = "public-sl"
 
-  # SSH to the bastion (session auth handled by the Bastion service)
-  ingress_security_rules {
-    protocol = "6"
-    source   = "0.0.0.0/0"
-    tcp_options {
-      min = 22
-      max = 22
+  # SSH to the bastion (session auth handled by the Bastion service).
+  # Same CIDRs as the bastion allow list — set to your tailnet CIDR
+  # (var.bastion_client_cidrs) once Tailscale is running.
+  dynamic "ingress_security_rules" {
+    for_each = var.bastion_client_cidrs
+    content {
+      protocol = "6"
+      source   = ingress_security_rules.value
+      tcp_options {
+        min = 22
+        max = 22
+      }
     }
   }
   egress_security_rules {
@@ -94,10 +99,20 @@ resource "oci_core_security_list" "private_sl" {
   vcn_id         = oci_core_vcn.vcn.id
   display_name   = "private-sl"
 
-  # MySQL (VCN internal)
+  # MySQL: bastion sessions + worker nodes. Pods egress via node SNAT, so
+  # the worker subnet covers in-cluster clients (and tailnet clients via
+  # the Connector subnet router).
   ingress_security_rules {
     protocol = "6"
-    source   = "10.0.0.0/16"
+    source   = var.public_subnet_cidr
+    tcp_options {
+      min = 3306
+      max = 3306
+    }
+  }
+  ingress_security_rules {
+    protocol = "6"
+    source   = var.worker_subnet_cidr
     tcp_options {
       min = 3306
       max = 3306
@@ -106,7 +121,7 @@ resource "oci_core_security_list" "private_sl" {
   # Bastion -> OKE API private endpoint (port-forward session target)
   ingress_security_rules {
     protocol = "6"
-    source   = "10.0.0.0/24"
+    source   = var.public_subnet_cidr
     tcp_options {
       min = 6443
       max = 6443
@@ -115,7 +130,7 @@ resource "oci_core_security_list" "private_sl" {
   # Worker nodes to/from API endpoint
   ingress_security_rules {
     protocol = "6"
-    source   = "10.0.2.0/24"
+    source   = var.worker_subnet_cidr
     tcp_options {
       min = 6443
       max = 6443
@@ -124,7 +139,7 @@ resource "oci_core_security_list" "private_sl" {
   # SSH from bastion to worker nodes (optional ops access)
   ingress_security_rules {
     protocol = "6"
-    source   = "10.0.0.0/24"
+    source   = var.public_subnet_cidr
     tcp_options {
       min = 22
       max = 22
@@ -133,12 +148,12 @@ resource "oci_core_security_list" "private_sl" {
   # Worker-to-worker and worker -> API endpoint/MySQL (flannel + kubelet)
   ingress_security_rules {
     protocol = "all"
-    source   = "10.0.2.0/24"
+    source   = var.worker_subnet_cidr
   }
   # API endpoint -> worker nodes (kubelet 10250, etc.)
   ingress_security_rules {
     protocol = "all"
-    source   = "10.0.1.0/24"
+    source   = var.private_subnet_cidr
   }
   egress_security_rules {
     protocol    = "all"
@@ -151,7 +166,7 @@ resource "oci_core_security_list" "private_sl" {
 resource "oci_core_subnet" "public_subnet" {
   compartment_id    = var.compartment_ocid
   vcn_id            = oci_core_vcn.vcn.id
-  cidr_block        = "10.0.0.0/24"
+  cidr_block        = var.public_subnet_cidr
   route_table_id    = oci_core_route_table.public_rt.id
   security_list_ids = [oci_core_security_list.public_sl.id]
   display_name      = "public-subnet"
@@ -161,7 +176,7 @@ resource "oci_core_subnet" "public_subnet" {
 resource "oci_core_subnet" "private_subnet" {
   compartment_id             = var.compartment_ocid
   vcn_id                     = oci_core_vcn.vcn.id
-  cidr_block                 = "10.0.1.0/24"
+  cidr_block                 = var.private_subnet_cidr
   route_table_id             = oci_core_route_table.private_rt.id
   security_list_ids          = [oci_core_security_list.private_sl.id]
   display_name               = "private-subnet"
@@ -172,7 +187,7 @@ resource "oci_core_subnet" "private_subnet" {
 resource "oci_core_subnet" "worker_subnet" {
   compartment_id             = var.compartment_ocid
   vcn_id                     = oci_core_vcn.vcn.id
-  cidr_block                 = "10.0.2.0/24"
+  cidr_block                 = var.worker_subnet_cidr
   route_table_id             = oci_core_route_table.private_rt.id
   security_list_ids          = [oci_core_security_list.private_sl.id]
   display_name               = "worker-subnet"

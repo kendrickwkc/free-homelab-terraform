@@ -47,8 +47,13 @@ output "cluster_private_endpoint" {
 }
 
 output "mysql_host" {
-  description = "Shared MySQL hostname (private VCN DNS)"
+  description = "Shared MySQL hostname (private VCN DNS; resolves inside the VCN only)"
   value       = "${oci_mysql_mysql_db_system.db.hostname_label}.private.${oci_core_vcn.vcn.dns_label}.oraclevcn.com"
+}
+
+output "mysql_private_ip" {
+  description = "Shared MySQL private IP (use from any tailnet device; pods can also use mysql_host)"
+  value       = oci_mysql_mysql_db_system.db.ip_address
 }
 
 output "bastion_id" {
