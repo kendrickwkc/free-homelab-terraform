@@ -1,11 +1,11 @@
-# free-homelab-terraform
+# oci-k8s-template
 
-[![CI](https://github.com/kendrickwkc/free-homelab-terraform/actions/workflows/terraform.yml/badge.svg)](https://github.com/kendrickwkc/free-homelab-terraform/actions/workflows/terraform.yml)
+[![CI](https://github.com/kendrickwkc/oci-k8s-template/actions/workflows/terraform.yml/badge.svg)](https://github.com/kendrickwkc/oci-k8s-template/actions/workflows/terraform.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Terraform](https://img.shields.io/badge/terraform-1.12.2-7B42BC?logo=terraform)](.github/workflows/terraform.yml)
 [![OCI provider](https://img.shields.io/terraform/provider/v/oracle/oci)](https://registry.terraform.io/providers/oracle/oci)
 [![Renovate](https://img.shields.io/badge/renovate-enabled-brightgreen?logo=renovatebot)](renovate.json)
-[![Use this template](https://img.shields.io/badge/Generate-Use_this_template-2ea44f)](https://github.com/kendrickwkc/free-homelab-terraform/generate)
+[![Use this template](https://img.shields.io/badge/Generate-Use_this_template-2ea44f)](https://github.com/kendrickwkc/oci-k8s-template/generate)
 
 A multi-tenant Kubernetes platform on the
 [OCI Always Free tier](https://www.oracle.com/cloud/free/): private OKE
@@ -17,7 +17,7 @@ Use GitHub's **Use this template** to create your copy, then follow
 free tier, see [nce/oci-free-cloud-k8s](https://github.com/nce/oci-free-cloud-k8s).
 
 <p>
-  <img src="docs/img/architecture.svg" alt="Public users reach tenant apps via Cloudflare Tunnel; the operator reaches the private cluster via Tailscale" width="820">
+  <img src="docs/architecture.drawio.svg" alt="Public users reach tenant apps via Cloudflare Tunnel; the operator reaches the private cluster via Tailscale" width="820">
 </p>
 
 ## What you get
@@ -51,6 +51,8 @@ volume, a second MySQL system, or an OKE *enhanced* cluster bills you.
 ## Quickstart
 
 - OCI account (target region = home region)
+- A dedicated compartment (e.g. `homelab`) — set `compartment_ocid` to it and
+  put the terraform-state bucket (step 0) there.
 - `terraform >= 1.5` (≥ 1.12 for the OCI backend), `oci` CLI (`oci setup config`)
 - `kubectl`, `helm`, `kubeseal`
 - [Tailscale](https://tailscale.com) account + local client
@@ -114,7 +116,7 @@ data "terraform_remote_state" "platform" {
 
 module "tenant" {
   # your template copy — bump ?ref= to pull module fixes from upstream
-  source = "github.com/<your-username>/free-homelab-terraform//modules/tenant?ref=v1.1.0"
+  source = "github.com/<your-username>/oci-k8s-template//modules/tenant?ref=v1.1.0"
 
   name           = "myproject"
   zone           = "your-domain.example"
@@ -130,7 +132,11 @@ module "tenant" {
 Conventions (overridable via module inputs): expose your app as a Kubernetes
 `Service` named after the tenant on port 8080 (`app_service =
 http://myproject:8080` by default); bucket names go in the shared namespace —
-prefix them with the tenant name.
+prefix them with the tenant name. Each tenant runs its own `cloudflared`
+Deployment against its own tunnel, so onboarding touches no shared config and
+a leaked token exposes only that tenant. `zone` is a plain input, so tenants
+can use different apex domains (or subdomains of a shared zone) without any
+central changes.
 
 Pin a release tag (`?ref=v1.1.0`). The
 [example tenant](examples/example-tenant/) shows the complete layout — its

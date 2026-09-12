@@ -48,7 +48,7 @@ module "tenant" {
   # Local dev / in-repo validation (shipped default):
   source = "../../modules/tenant"
   # Project repo (after copying, inside your template copy):
-  # source = "github.com/<your-username>/free-homelab-terraform//modules/tenant?ref=v1.1.0"
+  # source = "github.com/<your-username>/oci-k8s-template//modules/tenant?ref=v1.1.0"
 
   name           = "example"
   zone           = var.zone
